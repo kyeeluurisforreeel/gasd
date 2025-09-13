@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - GB ChatApp</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen">
+  <h1 class="text-3xl font-bold mb-6">Sign in with Google</h1>
+  <button id="googleSignIn" class="bg-indigo-600 px-6 py-3 rounded hover:bg-indigo-500">Sign in with Google</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR5XGFk0HPfA2IdWWoTNtGEPc5Tsxikig",
+      authDomain: "gbchatapp-35731.firebaseapp.com",
+      projectId: "gbchatapp-35731",
+      storageBucket: "gbchatapp-35731.firebasestorage.app",
+      messagingSenderId: "235147261711",
+      appId: "1:235147261711:web:d8f393a788b2b854a8b07a",
+      measurementId: "G-4JCCY36L82"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById('googleSignIn').addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => {
+          const user = result.user;
+
+          // Open chat in a new cloaked window
+          const chatWindow = window.open('about:blank', '_blank', 'width=800,height=600');
+
+          // Write the chat HTML dynamically
+          chatWindow.document.write(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat - GB ChatApp</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  #messages { overflow-y: auto; height: calc(100vh - 80px); }
+  .message { display: flex; align-items: center; margin-bottom: 8px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; }
+</style>
+</head>
+<body class="bg-gray-900 text-white flex h-screen">
+
+<div class="flex-1 flex flex-col">
+  <div class="bg-gray-800 p-4 text-xl font-semibold">#general</div>
+  <div id="messages" class="flex-1 p-4 overflow-y-auto space-y-2"></div>
+  <form id="messageForm" class="bg-gray-800 p-4 flex">
+    <input id="messageInput" type="text" placeholder="Message #general" class="flex-1 bg-gray-700 rounded-l px-4 py-2 focus:outline-none" required>
+    <button type="submit" class="bg-indigo-600 px-4 py-2 rounded-r hover:bg-indigo-500">Send</button>
+  </form>
+</div>
+
+<script>
+  const firebaseConfig = ${JSON.stringify(firebaseConfig)};
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const messagesRef = db.ref('messages');
+
+  const messagesDiv = document.getElementById('messages');
+  const messageForm = document.getElementById('messageForm');
+  const messageInput = document.getElementById('messageInput');
+
+  const currentUser = {
+    name: "${user.displayName}",
+    photo: "${user.photoURL}"
+  };
+
+  messagesRef.on('child_added', snapshot => {
+    const msg = snapshot.val();
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', 'p-2', 'bg-gray-700', 'rounded');
+    messageElement.innerHTML = \`<img src="\${msg.photo}" class="avatar"><strong>\${msg.username}</strong>: \${msg.text}\`;
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  messageForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = messageInput.value.trim();
+    if (!text) return;
+    messagesRef.push({ username: currentUser.name, photo: currentUser.photo, text });
+    messageInput.value = '';
+  });
+</script>
+
+</body>
+</html>
+          `);
+
+          chatWindow.document.close();
+        })
+        .catch(err => alert(err.message));
+    });
+  </script>
+</body>
+</html>
